@@ -1,17 +1,55 @@
-# bitago_longexam1
+# Bitago Long Exam 1
 
-A new Flutter project.
+Flutter implementation of the supplied long-exam screenshots.
 
-## Getting Started
+## Run
 
-This project is a starting point for a Flutter application.
+```sh
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+Use a DummyJSON demo account, for example username `emilys` and password
+`emilyspass`. An internet connection is required for sign-in, posts, and comments.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Implemented requirements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Required models, providers, screens, services, and reusable widgets.
+- Screenshot dependency list and package name `bitago_longexam1`.
+- Post model retains the screenshot fields and JSON fallbacks, with a title field
+  for DummyJSON posts. PostService supports the screenshot pagination API.
+- Real DummyJSON sign-in, profile persistence with SharedPreferences, and splash
+  routing to sign-in or the home screen based on the saved user.
+- News feed pagination, profile posts fetched by user ID, post detail with all
+  comments, and adding comments with loading, empty, retry, and error states.
+- Clickable post and comment likes stored separately for each user.
+- Settings with persisted system/light/dark theme and sign-out that clears the
+  session and navigation history.
+
+## Assets
+
+The app uses the supplied `assets/images/nuicon.jpeg` directly, as requested.
+It replaces the PNG names in the screenshots. The course fonts and `owl.jpg`
+were not supplied. The app uses system font fallbacks; the optional font
+configuration is recorded in `pubspec.yaml` for when the originals are available.
+
+## API behavior
+
+DummyJSON simulates comment writes and does not persist them on its server.
+Successfully submitted comments are therefore also saved locally per user and
+post. Likes are local preferences; they do not change the public API's totals.
+The saved session contains the user profile, not the password or access tokens.
+This assignment restores local sign-in state; it does not authorize protected
+server operations. Notifications have an empty state because the supplied API
+has no notifications endpoint.
+
+API references: https://dummyjson.com/docs/auth,
+https://dummyjson.com/docs/posts, https://dummyjson.com/docs/comments.
+
+## Verify
+
+```sh
+flutter analyze
+flutter test
+flutter build web
+```
