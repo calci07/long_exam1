@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../providers/likes_provider.dart';
@@ -9,6 +11,7 @@ import 'newsfeed_screen.dart';
 import 'notification_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
+import 'signin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -26,12 +29,35 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
-  late final _likes = LikesProvider(widget.preferences, widget.user.id);
+  late final _likes = LikesProvider(widget.preferences, widget.user.storageId);
   late final _comments = CommentService(widget.preferences);
   final _posts = PostService();
+  StreamSubscription<auth.User?>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.user.loginType == LoginType.firebase) {
+      _authSubscription = auth.FirebaseAuth.instance.authStateChanges().listen((
+        user,
+      ) {
+        if (user != null || !mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => SigninScreen(
+              preferences: widget.preferences,
+              theme: widget.theme,
+            ),
+          ),
+          (_) => false,
+        );
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _likes.dispose();
     _comments.dispose();
     _posts.dispose();
@@ -73,6 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const NotificationScreen(),
               ProfileScreen(
+                preferences: widget.preferences,
+                theme: widget.theme,
                 user: widget.user,
                 posts: _posts,
                 comments: _comments,

@@ -11,14 +11,14 @@ class CommentService {
   final SharedPreferences preferences;
   final http.Client _client;
 
-  String _key(int userId, int postId) => 'comments_${userId}_$postId';
+  String _key(Object userId, int postId) => 'comments_${userId}_$postId';
 
-  List<Comment> _local(int postId, int userId) {
+  List<Comment> _local(int postId, Object userId) {
     final raw = preferences.getStringList(_key(userId, postId)) ?? [];
     return raw.map((entry) => Comment.fromJson(jsonDecode(entry))).toList();
   }
 
-  Future<List<Comment>> getComments(int postId, int userId) async {
+  Future<List<Comment>> getComments(int postId, Object userId) async {
     final response = await _client
         .get(Uri.parse('$host/comments/post/$postId?limit=0'))
         .timeout(requestTimeout);
@@ -34,6 +34,18 @@ class CommentService {
     final text = body.trim();
     if (text.isEmpty || text.length > 1000) {
       throw ArgumentError('Enter a comment of 1 to 1,000 characters.');
+    }
+    if (user.loginType == LoginType.firebase) {
+      final comment = Comment(
+        id: -DateTime.now().microsecondsSinceEpoch,
+        postId: postId,
+        userId: user.id,
+        username: user.username,
+        body: text,
+        likes: 0,
+      );
+      await _saveLocal(postId, user, comment);
+      return comment;
     }
     final response = await _client
         .post(
@@ -55,14 +67,18 @@ class CommentService {
       body: remote.body,
       likes: remote.likes,
     );
-    final comments = [..._local(postId, user.id), comment];
+    await _saveLocal(postId, user, comment);
+    return comment;
+  }
+
+  Future<void> _saveLocal(int postId, User user, Comment comment) async {
+    final comments = [..._local(postId, user.storageId), comment];
     if (!await preferences.setStringList(
-      _key(user.id, postId),
+      _key(user.storageId, postId),
       comments.map((c) => jsonEncode(c.toJson())).toList(),
     )) {
       throw Exception('Could not save your comment.');
     }
-    return comment;
   }
 
   void dispose() => _client.close();

@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      function owner() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+      function validProfile() {
+        let p = request.resource.data;
+        return p.keys().hasAll(['fName', 'lName', 'age', 'contactNo', 'username', 'emailAddress'])
+          && p.keys().hasOnly(['fName', 'lName', 'age', 'contactNo', 'username', 'emailAddress'])
+          && p.fName is string && p.fName.size() > 0 && p.fName.size() <= 80
+          && p.lName is string && p.lName.size() > 0 && p.lName.size() <= 80
+          && p.age is int && p.age >= 1 && p.age <= 150
+          && p.contactNo is string && p.contactNo.size() >= 7 && p.contactNo.size() <= 20
+          && p.username is string && p.username.matches('^[a-zA-Z0-9_.]{3,30}$')
+          && p.emailAddress == request.auth.token.email;
+      }
+      allow get, delete: if owner();
+      allow create: if owner() && validProfile();
+      allow update: if owner() && validProfile()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username']);
+    }
+  }
+}

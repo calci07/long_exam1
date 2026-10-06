@@ -47,7 +47,7 @@ class _DetailScreenState extends State<DetailScreen> {
     try {
       final comments = await widget.comments.getComments(
         widget.post.id,
-        widget.user.id,
+        widget.user.storageId,
       );
       if (mounted) setState(() => _comments = comments);
     } catch (_) {

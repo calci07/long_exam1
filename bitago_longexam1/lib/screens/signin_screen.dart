@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/theme_provider.dart';
 import '../services/user_service.dart';
+import '../models/user.dart';
+import '../utils/validators.dart';
+import 'signup_screen.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_font.dart';
 import '../widgets/custom_textformfield.dart';
@@ -27,6 +30,7 @@ class _SigninScreenState extends State<SigninScreen> {
   bool _busy = false;
   bool _obscure = true;
   String? _error;
+  LoginType _loginType = LoginType.firebase;
 
   Future<void> _signIn() async {
     if (_busy || !_form.currentState!.validate()) return;
@@ -35,26 +39,27 @@ class _SigninScreenState extends State<SigninScreen> {
       _error = null;
     });
     try {
-      final user = await _service.signIn(_username.text, _password.text);
+      User? user;
+      if (_loginType == LoginType.firebase) {
+        await _service.signIn1(email: _username.text, password: _password.text);
+        user = await _service.getUserData();
+      } else {
+        user = await _service.signIn(_username.text, _password.text);
+      }
+      if (user == null) throw const SignInException('Please sign in again.');
+      final signedInUser = user;
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => HomeScreen(
-            user: user,
+            user: signedInUser,
             preferences: widget.preferences,
             theme: widget.theme,
           ),
         ),
       );
-    } on SignInException catch (error) {
-      if (mounted) setState(() => _error = error.message);
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => _error =
-              'Could not connect. Check your internet connection and try again.',
-        );
-      }
+    } catch (error) {
+      if (mounted) setState(() => _error = authErrorMessage(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -88,9 +93,37 @@ class _SigninScreenState extends State<SigninScreen> {
                     const SizedBox(height: 8),
                     const Text('Sign in to Bitago Long Exam 1'),
                     const SizedBox(height: 32),
+                    SegmentedButton<LoginType>(
+                      segments: const [
+                        ButtonSegment(
+                          value: LoginType.firebase,
+                          label: Text('Firebase'),
+                        ),
+                        ButtonSegment(
+                          value: LoginType.dummyJson,
+                          label: Text('DummyJSON'),
+                        ),
+                      ],
+                      selected: {_loginType},
+                      onSelectionChanged: _busy
+                          ? null
+                          : (selection) => setState(() {
+                              _loginType = selection.single;
+                              _error = null;
+                              _username.clear();
+                              _password.clear();
+                              _form.currentState?.reset();
+                            }),
+                    ),
+                    const SizedBox(height: 16),
                     CustomTextFormField(
                       controller: _username,
-                      label: 'Username',
+                      label: _loginType == LoginType.firebase
+                          ? 'Email address'
+                          : 'Username',
+                      validator: _loginType == LoginType.firebase
+                          ? Validators.email
+                          : Validators.requiredText,
                       autofillHints: const [AutofillHints.username],
                     ),
                     const SizedBox(height: 16),
@@ -126,6 +159,24 @@ class _SigninScreenState extends State<SigninScreen> {
                       busy: _busy,
                       onPressed: _signIn,
                     ),
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SignupScreen(
+                                  preferences: widget.preferences,
+                                  theme: widget.theme,
+                                ),
+                              ),
+                            ),
+                      child: const Text('Create a Firebase account'),
+                    ),
+                    if (_loginType == LoginType.dummyJson)
+                      const Text(
+                        'DummyJSON is a demo service. Use its sample credentials, not your personal password.',
+                      ),
                   ],
                 ),
               ),

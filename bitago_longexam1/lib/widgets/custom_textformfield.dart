@@ -9,6 +9,7 @@ class CustomTextFormField extends StatelessWidget {
     this.suffixIcon,
     this.onSubmitted,
     this.autofillHints,
+    this.validator,
   });
   final TextEditingController controller;
   final String label;
@@ -16,6 +17,7 @@ class CustomTextFormField extends StatelessWidget {
   final Widget? suffixIcon;
   final ValueChanged<String>? onSubmitted;
   final Iterable<String>? autofillHints;
+  final FormFieldValidator<String>? validator;
 
   @override
   Widget build(BuildContext context) => TextFormField(
@@ -30,8 +32,10 @@ class CustomTextFormField extends StatelessWidget {
       border: const OutlineInputBorder(),
       suffixIcon: suffixIcon,
     ),
-    validator: (value) => value == null || value.trim().isEmpty
-        ? 'Enter your ${label.toLowerCase()}.'
-        : null,
+    validator:
+        validator ??
+        (value) => value == null || value.trim().isEmpty
+            ? 'Enter your ${label.toLowerCase()}.'
+            : null,
   );
 }

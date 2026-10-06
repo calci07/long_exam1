@@ -19,28 +19,39 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  String? _error;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _restore());
   }
 
-  void _restore() {
+  Future<void> _restore() async {
     if (!mounted) return;
+    setState(() => _error = null);
     final service = UserService(widget.preferences);
-    final user = service.restoreUser();
-    service.dispose();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => user == null
-            ? SigninScreen(preferences: widget.preferences, theme: widget.theme)
-            : HomeScreen(
-                user: user,
-                preferences: widget.preferences,
-                theme: widget.theme,
-              ),
-      ),
-    );
+    try {
+      final user = await service.getUserData();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => user == null
+              ? SigninScreen(
+                  preferences: widget.preferences,
+                  theme: widget.theme,
+                )
+              : HomeScreen(
+                  user: user,
+                  preferences: widget.preferences,
+                  theme: widget.theme,
+                ),
+        ),
+      );
+    } catch (error) {
+      if (mounted) setState(() => _error = authErrorMessage(error));
+    } finally {
+      service.dispose();
+    }
   }
 
   @override
@@ -53,7 +64,26 @@ class _SplashScreenState extends State<SplashScreen> {
           const SizedBox(height: 16),
           const Text(appName),
           const SizedBox(height: 24),
-          const CircularProgressIndicator(),
+          if (_error == null)
+            const CircularProgressIndicator()
+          else ...[
+            Text(_error!),
+            TextButton(onPressed: _restore, child: const Text('Try again')),
+            TextButton(
+              onPressed: () async {
+                final service = UserService(widget.preferences);
+                try {
+                  await service.signOut();
+                  await _restore();
+                } catch (error) {
+                  if (mounted) setState(() => _error = authErrorMessage(error));
+                } finally {
+                  service.dispose();
+                }
+              },
+              child: const Text('Back to login'),
+            ),
+          ],
         ],
       ),
     ),

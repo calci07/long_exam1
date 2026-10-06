@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
 import 'providers/theme_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -82,15 +86,17 @@ class _MyAppState extends State<MyApp> {
         ),
       );
     }
-    return ListenableBuilder(
-      listenable: _theme!,
-      builder: (context, _) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: appName,
-        theme: _themeData(Brightness.light),
-        darkTheme: _themeData(Brightness.dark),
-        themeMode: _theme!.mode,
-        home: SplashScreen(preferences: _preferences!, theme: _theme!),
+    return ChangeNotifierProvider.value(
+      value: _theme!,
+      child: Consumer<ThemeProvider>(
+        builder: (context, theme, _) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: appName,
+          theme: _themeData(Brightness.light),
+          darkTheme: _themeData(Brightness.dark),
+          themeMode: theme.mode,
+          home: SplashScreen(preferences: _preferences!, theme: _theme!),
+        ),
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LikesProvider extends ChangeNotifier {
-  LikesProvider(this.preferences, int userId) : _key = 'likes_$userId' {
+  LikesProvider(this.preferences, Object userId) : _key = 'likes_$userId' {
     _liked = (preferences.getStringList(_key) ?? []).toSet();
   }
   final SharedPreferences preferences;
