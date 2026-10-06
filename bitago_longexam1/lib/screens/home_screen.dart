@@ -8,7 +8,7 @@ import '../providers/theme_provider.dart';
 import '../services/comment_service.dart';
 import '../services/post_service.dart';
 import 'newsfeed_screen.dart';
-import 'notification_screen.dart';
+import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'signin_screen.dart';
@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(['News feed', 'Notifications', 'My profile'][_index]),
+      title: Text(['News feed', 'Chat', 'My profile'][_index]),
       actions: [
         IconButton(
           tooltip: 'Settings',
@@ -97,7 +97,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 comments: _comments,
                 likes: _likes,
               ),
-              const NotificationScreen(),
+              if (widget.user.loginType == LoginType.firebase)
+                const ChatScreen()
+              else
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'Sign in with a Firebase account to chat with other registered users.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
               ProfileScreen(
                 preferences: widget.preferences,
                 theme: widget.theme,
@@ -121,8 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Feed',
         ),
         NavigationDestination(
-          icon: Icon(Icons.notifications_outlined),
-          label: 'Notifications',
+          icon: Icon(Icons.chat_bubble_outline),
+          selectedIcon: Icon(Icons.chat_bubble),
+          label: 'Chat',
         ),
         NavigationDestination(
           icon: Icon(Icons.person_outline),

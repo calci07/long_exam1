@@ -1,5 +1,23 @@
 # Verification — 3 October 2026
 
+## Part II verification — 7 October 2026
+
+- Existing region retained. Chat now replaces Notifications in the second tab.
+- `flutter analyze`: no issues.
+- `flutter test`: all 28 tests passed, including seven chat service/widget tests.
+- Official Firestore emulator: all six security-rule tests passed. The previous
+  emulator-download limitation below is resolved; downloading with IPv4 curl worked.
+- Updated Firestore rules compiled and deployed to `advmobprog-firebase-dd6d7`.
+- Web and Android debug builds succeeded. Updated APK: `outputs/bitago-longexam1.apk`.
+- Two local browser sessions using real Firebase SDKs and Auth/Firestore emulators:
+  sign-in, self-excluding user directory, message send/receive, and seen receipt
+  verified. No production accounts or messages were created for this test.
+- Existing build warnings remain: Cupertino font fallback in the web build and
+  Firebase plugins' future Kotlin Gradle Plugin compatibility warning.
+- See [Part II instructions and test steps](firebase-part-ii.md).
+
+## Part I record
+
 - Firebase CLI signed in as geraldb2417@gmail.com.
 - Existing project advmobprog-firebase-dd6d7 reused; Android, iOS and web registered.
 - Email/password provider enabled in the Firebase console.
